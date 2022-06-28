@@ -1,6 +1,13 @@
 let pencil = '#444'
 const pencilMultiplier = random(1, 2)
-const pencilThickness =  random(1, 1.3)
+const pencilThickness = random(1, 1.3)
+
+startSize = random(2, 6)
+leftLines = random(50, 150)
+rightLines = random(50, 150)
+withCross = random() < .5
+withLines = withCross ? random() < .5 : true
+withBorder = true
 
 async function makeImage() {
     background(255, 248, 245)
@@ -13,13 +20,15 @@ async function makeImage() {
     path.smooth()
     path.strokeColor = pencil
 
-    path.segments.forEach((seg, i) => seg.data = { growth: noise(i / 30)*2 + .5 });
+    path.segments.forEach((seg, i) => seg.data = { growth: startSize });
     origPath = path.clone()
     origPath.segments.forEach((seg, i) => seg.data = path.segments[i].data);
 
+    drawPath(path)
+
     side1StartPath = new Path()
     side1EndPath = new Path()
-    for (let i = 0; i < 150; i++) {
+    for (let i = 0; i < rightLines; i++) {
         side1StartPath.add(path.firstSegment.point.clone())
         side1EndPath.add(path.lastSegment.point.clone())
         newPath = path.clone()
@@ -60,12 +69,14 @@ async function makeImage() {
             }
         }
         newPathClone.smooth()
-        drawPath(newPathClone)
+        if (withLines) drawPath(newPathClone)
 
-        newPathClone.segments.forEach((seg, i) => {
-            l = new Path.Line(seg.point, path.segments[i].point)
-            drawPath(l)
-        })
+        if (withCross) {
+            newPathClone.segments.forEach((seg, i) => {
+                l = new Path.Line(seg.point, path.segments[i].point)
+                drawPath(l)
+            })
+        }
 
         path = newPathClone
     }
@@ -75,7 +86,7 @@ async function makeImage() {
 
     side2StartPath = new Path()
     side2EndPath = new Path()
-    for (let i = 0; i < 150; i++) {
+    for (let i = 0; i < leftLines; i++) {
         side2StartPath.add(path.firstSegment.point.clone())
         side2EndPath.add(path.lastSegment.point.clone())
         newPath = path.clone()
@@ -116,27 +127,31 @@ async function makeImage() {
             }
         }
         newPathClone.smooth()
-        drawPath(newPathClone)
+        if (withLines) drawPath(newPathClone)
 
-        newPathClone.segments.forEach((seg, i) => {
-            l = new Path.Line(seg.point, path.segments[i].point)
-            drawPath(l)
-        })
+        if (withCross) {
+            newPathClone.segments.forEach((seg, i) => {
+                l = new Path.Line(seg.point, path.segments[i].point)
+                drawPath(l)
+            })
+        }
 
         path = newPathClone
     }
 
-    side2 = path.clone()
-    side1EndPath.reverse()
-    side2StartPath.reverse()
-    side2.reverse()
-    border = new Path([...side1StartPath.segments, ...side1.segments, ...side1EndPath.segments, ...side2EndPath.segments,...side2.segments ,...side2StartPath.segments])
-    step = .1
-    for (let i=0;i<30;i++){
-        drawPath(border)
-        border = border.offset(step)
-        border.simplify()
-        step+=.1
+    if (withBorder) {
+        side2 = path.clone()
+        side1EndPath.reverse()
+        side2StartPath.reverse()
+        side2.reverse()
+        border = new Path([...side1StartPath.segments, ...side1.segments, ...side1EndPath.segments, ...side2EndPath.segments, ...side2.segments, ...side2StartPath.segments])
+        step = .1
+        for (let i = 0; i < 30; i++) {
+            drawPath(border, (30 - i) / 30)
+            border = border.offset(step)
+            border.simplify()
+            step += .1
+        }
     }
 }
 
